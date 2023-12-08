@@ -1,3 +1,4 @@
+/* Notes endpoints */
 const notesController = require('./notesController');
 const express = require('express');
 const notesRouter = express.Router();
