@@ -1,3 +1,10 @@
+/*
+    id: string,
+    content: string,
+    date: string(yyyy-mm-dd),
+    status: string(new || finished)
+*/
+
 const notes = [
     {
         id: "75816",

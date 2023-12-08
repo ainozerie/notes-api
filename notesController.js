@@ -1,13 +1,17 @@
 const notesService = require('./notesService');
 
 const getAllnotes = (req, res) => {
-    const allNotes = notesService.getAllnotes();
-    res.status(200).send(allNotes);
+    const notes = notesService.getAllnotes();
+    res.status(200).send({status: 'OK', data: notes});
 };
 
 const getOneNote = (req, res) => {
-    const note = notesService.getOneNote();
-    res.send('Get one note');
+    const noteId = req.params.noteId;
+    const note = notesService.getOneNote(noteId);
+    if (note) {
+        return res.status(200).send({status: 'OK', data: {note}});
+    }
+    return res.status(404).send({status: 'FAILED', data: {error: 'Note with this id does not exist.'}});
 };
 
 const createOneNote = (req, res) => {
@@ -28,11 +32,20 @@ const createOneNote = (req, res) => {
 };
 
 const updateOneNote = (req, res) => {
-    const updatedNote = notesService.updateOneNote();
-    res.send('Update one note');
+    const noteId = req.params.noteId;
+    const {body} = req;
+    if (body.content || body.date || body.status) {
+        const updatedNote = notesService.updateOneNote(noteId, body);
+        if (updatedNote) {
+            return res.status(200).send({status: 'OK', data: updatedNote});    
+        }
+        return res.status(404).send({status: 'FAILED', data: {error: 'Note with this id does not exist.'}});
+    }
+    return res.status(400).send({status: 'FAILED', data: {error: 'No properties to update.'}});
 };
 
 const deleteOneNote = (req, res) => {
+    const noteId = req.params.noteId;
     notesService.deleteOneNote();
     res.send('Delete one note');
 };

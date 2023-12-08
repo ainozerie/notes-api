@@ -1,21 +1,30 @@
 const notes = require('./notes');
 const {idGenerator} = require('./utils');
+const {isValidDate} = require('./utils');
 
 const getAllnotes = () => {
-    return {status: 'OK', data: notes};
+    return notes;
 }
-const getOneNote = () => {
-    return;
+const getOneNote = (id) => {
+    const note = notes.find(note => note.id === id);
+    return note;
 }
 const createOneNote = (newNote) => {
     newNote.status = 'new';
     newNote.id = idGenerator();
-    console.log(notes)
-    const createdNote = notes.push(newNote);
-    return createdNote;
+    notes.push(newNote);
+    return newNote;
 }
-const updateOneNote = () => {
-    return;
+const updateOneNote = (id, newProperties) => {
+    const noteIndex = notes.findIndex(note => note.id === id);
+    if (noteIndex == -1) {
+        return undefined;
+    }
+    if (newProperties.content) notes[noteIndex].content = newProperties.content;
+    if (isValidDate(newProperties.date)) notes[noteIndex].date = newProperties.date;
+    if (newProperties.status == 'new' || newProperties.status == 'finished') notes[noteIndex].status = newProperties.status;
+    
+    return notes[noteIndex];
 }
 const deleteOneNote = () => {
     return;
