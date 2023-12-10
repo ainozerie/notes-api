@@ -26,8 +26,13 @@ const updateOneNote = (id, newProperties) => {
     
     return notes[noteIndex];
 }
-const deleteOneNote = () => {
-    return;
+const deleteOneNote = (id) => {
+    const noteIndex = notes.findIndex(note => note.id === id);
+    if (noteIndex == -1) {
+        return undefined;
+    }
+    const deletedNote = notes.splice(noteIndex, 1);
+    return deletedNote;
 }
 
 module.exports = {

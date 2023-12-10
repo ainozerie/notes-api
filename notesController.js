@@ -1,4 +1,5 @@
 const notesService = require('./notesService');
+const {isValidDate} = require('./utils');
 
 const getAllnotes = (req, res) => {
     const notes = notesService.getAllnotes();
@@ -21,6 +22,11 @@ const createOneNote = (req, res) => {
             status: 'FAILED', data: {error: "One of the properties missing."}
         });
     }
+    if (!isValidDate(body.date)) {
+        return res.status(400).send({
+            status: 'FAILED', data: {error: "Date is in invalid format(yyyy-mm-dd)."}
+        });
+    }
 
     const newNote = {
         content: body.content,
@@ -28,7 +34,7 @@ const createOneNote = (req, res) => {
     }
 
     const createdNote = notesService.createOneNote(newNote);
-    res.status(201).send({status: 'OK', data: createdNote});
+    return res.status(201).send({status: 'OK', data: createdNote});
 };
 
 const updateOneNote = (req, res) => {
@@ -46,8 +52,11 @@ const updateOneNote = (req, res) => {
 
 const deleteOneNote = (req, res) => {
     const noteId = req.params.noteId;
-    notesService.deleteOneNote();
-    res.send('Delete one note');
+    const deletedNote = notesService.deleteOneNote(noteId);
+    if (deletedNote.id === noteId) {
+        return res.status(204).send({status: 'OK'});
+    }
+    return res.status(404).send({status: 'FAILED', data: {error: 'Note with this id does not exist.'}});
 };
 
 module.exports = {
