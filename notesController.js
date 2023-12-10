@@ -1,62 +1,73 @@
-const notesService = require('./notesService');
-const {isValidDate} = require('./utils');
+const notes = require('./notes');
+const { idGenerator } = require('./utils');
+const { isValidDate } = require('./utils');
 
-const getAllnotes = (req, res) => {
-    const notes = notesService.getAllnotes();
-    res.status(200).send({status: 'OK', data: notes});
+/* Create an error and passes to errorHandler */
+const invokeError = (statusCode, message) => {
+    const error = new Error(message);
+    error.statusCode = statusCode;
+    return error;
+}
+
+const getAllnotes = (req, res, next) => {
+    res.status(200).send({ status: 'OK', data: notes });
 };
 
-const getOneNote = (req, res) => {
-    const noteId = req.params.noteId;
-    const note = notesService.getOneNote(noteId);
+const getOneNote = (req, res, next) => {
+    const note = notes.find(note => note.id === req.noteId);
     if (note) {
-        return res.status(200).send({status: 'OK', data: {note}});
+        return res.status(200).send({ status: 'OK', data: { note } });
     }
-    return res.status(404).send({status: 'FAILED', data: {error: 'Note with this id does not exist.'}});
+    next(invokeError(404, 'Note with this id does not exist.'));
 };
 
-const createOneNote = (req, res) => {
-    const {body} = req;
-    if (!body.content || !body.date) {
-        return res.status(400).send({
-            status: 'FAILED', data: {error: "One of the properties missing."}
-        });
-    }
-    if (!isValidDate(body.date)) {
-        return res.status(400).send({
-            status: 'FAILED', data: {error: "Date is in invalid format(yyyy-mm-dd)."}
-        });
-    }
+const createOneNote = (req, res, next) => {
+    const { body } = req;
+    if (!body.content || !body.date) next(invokeError(400, 'One of the properties missing.'));
+    if (!isValidDate(body.date)) next(invokeError(400, 'Date is in invalid format(yyyy-mm-dd).'));
 
     const newNote = {
+        id: idGenerator(),
         content: body.content,
-        date: body.date
+        date: body.date,
+        status: 'new'
     }
 
-    const createdNote = notesService.createOneNote(newNote);
-    return res.status(201).send({status: 'OK', data: createdNote});
+    notes.push(newNote);
+    return res.status(201).send({ status: 'OK', data: newNote });
 };
 
-const updateOneNote = (req, res) => {
-    const noteId = req.params.noteId;
-    const {body} = req;
+const updateOneNote = (req, res, next) => {
+    const { body } = req;
     if (body.content || body.date || body.status) {
-        const updatedNote = notesService.updateOneNote(noteId, body);
-        if (updatedNote) {
-            return res.status(200).send({status: 'OK', data: updatedNote});    
+        const noteIndex = notes.findIndex(note => note.id === req.noteId);
+        if (noteIndex == -1) next(invokeError(404, 'Note with this id does not exist.'));
+
+        if (body.content) notes[noteIndex].content = body.content;
+        if (body.date) {
+            if (isValidDate(body.date)) {
+                notes[noteIndex].date = body.date;
+            } else {
+                next(invokeError(400, 'Date is invalid (yyyy-mm-dd).'))
+            }
         }
-        return res.status(404).send({status: 'FAILED', data: {error: 'Note with this id does not exist.'}});
+        if (body.status == 'new' || body.status == 'finished') {
+            notes[noteIndex].status = body.status
+        } else {
+            next(invokeError(400, 'Status is invalid (new or finished).'));
+        }
+        return res.status(200).send({ status: 'OK', data: notes[noteIndex] });
     }
-    return res.status(400).send({status: 'FAILED', data: {error: 'No properties to update.'}});
+    next(invokeError(400, 'Empty body.'));
 };
 
-const deleteOneNote = (req, res) => {
-    const noteId = req.params.noteId;
-    const deletedNote = notesService.deleteOneNote(noteId);
-    if (deletedNote.id === noteId) {
-        return res.status(204).send({status: 'OK'});
+const deleteOneNote = (req, res, next) => {
+    const noteIndex = notes.findIndex(note => note.id === req.noteId);
+    if (noteIndex == -1) {
+        next(invokeError(404, 'Note with this id does not exist.'));
     }
-    return res.status(404).send({status: 'FAILED', data: {error: 'Note with this id does not exist.'}});
+    notes.splice(noteIndex, 1);
+    return res.status(204).send({ status: 'OK' });
 };
 
 module.exports = {
