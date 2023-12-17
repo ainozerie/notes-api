@@ -25,8 +25,11 @@ notesRouter.post('/', notesController.createOneNote);
 /* Updete note */
 notesRouter.put('/:noteId', getNoteId, notesController.updateOneNote);
 
-/* Delete note*/
+/* Delete note */
 notesRouter.delete('/:noteId', getNoteId, notesController.deleteOneNote);
+
+/* Delete all notes*/
+notesRouter.delete('/', notesController.deleteAll);
 
 notesRouter.use(errorHandler);
 
